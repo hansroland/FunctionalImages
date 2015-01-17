@@ -15,7 +15,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     FunctionalImagesBase
+  exposed-modules:     FunctionalImages,
+                       FunctionalImagesBase
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8, JuicyPixels >=3.2 && <3.3
