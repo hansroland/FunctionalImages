@@ -13,10 +13,14 @@ module FunctionalImages (
    altRings,
    polarChecker,
    wavDist,
+   sierpinski,
    -- * interface functions to JuicyPixels
    generateBWImageR2,
+   generateBWImageI2,
    generateGrayImageR2
    ) where
+
+import Data.Bits
 
 import Codec.Picture
 import FunctionalImagesBase
@@ -62,9 +66,15 @@ polarChecker n = checker . sc . toPolar
    where
      sc (r,a) = (r,a * fromIntegral n / pi)
 
+-- | sierpinski - An other way todraw a sierpinski triangle
+sierpinski :: IPoint -> Bool
+sierpinski (x , y) = (abs x) .|. (abs y) == abs x
+
 -- | waveDist
 wavDist :: Point -> Frac
 wavDist p = (1 + cos (pi * distO p)) / 2
+
+
 
 
 
