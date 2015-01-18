@@ -10,14 +10,24 @@
 
 module FunctionalImagesBase(
     Point,
-    generateBWImageR2
-
+    Frac,
+    generateBWImageR2,
+    generateGrayImageR2
     ) where
 
 import Codec.Picture
 
 type Point = (Float, Float)
 
+-- type fraction means numbers between 0 and 1
+type Frac = Float
+
+-- a little helper function to restict a value into an interal
+inInterval :: Ord a => a -> a -> a -> a
+inInterval val low high
+   | val < low = low
+   | val > high = high
+   | otherwise  = val
 
 -- | Generate an image in the Real X Real space
 generateImageR2 :: Pixel a => (Point -> a) 	-- Coordinate Rendering function
@@ -36,6 +46,10 @@ rgb8White = PixelRGB8 255 255 255
 rgb8Black = PixelRGB8 0 0 0
 
 
+-- ---------------------------------------------------------------------------
+-- Black and White images
+-- ---------------------------------------------------------------------------
+
 -- | General function to generate a black and white image in R2
 generateBWImageR2 :: (Point -> Bool)            -- black white function in R2
          -> (Float, Float)                      -- lower left corner
@@ -49,4 +63,30 @@ generateBWImageR2 bwRenderer = generateImageR2 (bool2rgb8 . bwRenderer)
 bool2rgb8 :: Bool -> PixelRGB8
 bool2rgb8 True  = rgb8Black
 bool2rgb8 False = rgb8White
+
+-- ----------------------------------------------------------------------------
+-- Gray images
+-- ----------------------------------------------------------------------------
+
+-- generate a grayscale image in R2
+generateGrayImageR2 :: (Point -> Frac)				
+         -> (Float, Float)
+         -> (Float, Float)
+         -> Int
+         -> Image PixelRGB8
+generateGrayImageR2 renderer = generateImageR2 (frac2rgb8 . renderer)
+
+-- a little support function to generate grey images
+frac2rgb8 :: Frac -> PixelRGB8
+frac2rgb8 f = PixelRGB8 ff ff ff
+    where 
+      ff = frac2pixel8 f
+
+-- function to convert a Fraction between 0 and 1 to an Integer betwenn 0 and255
+frac2pixel8 :: Frac -> Pixel8
+frac2pixel8 f = floor $ (fromIntegral 255) * (inInterval f 0 1)
+
+
+
+
 

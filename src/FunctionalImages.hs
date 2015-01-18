@@ -12,8 +12,10 @@ module FunctionalImages (
    checker,
    altRings,
    polarChecker,
+   wavDist,
    -- * interface functions to JuicyPixels
-   generateBWImageR2
+   generateBWImageR2,
+   generateGrayImageR2
    ) where
 
 import Codec.Picture
@@ -59,3 +61,10 @@ polarChecker :: Int -> Point -> Bool
 polarChecker n = checker . sc . toPolar
    where
      sc (r,a) = (r,a * fromIntegral n / pi)
+
+-- | waveDist
+wavDist :: Point -> Frac
+wavDist p = (1 + cos (pi * distO p)) / 2
+
+
+
