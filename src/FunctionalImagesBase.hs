@@ -45,7 +45,7 @@ generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRendere
     where
       pixelSize = (x1 - x0) / fromIntegral width
       height = floor $ (y1 - y0) / (x1 - x0) * fromIntegral width
-      pixelRenderer ix iy = coordRenderer ((x0 + (fromIntegral ix) * pixelSize), (y1 - (fromIntegral iy) * pixelSize))
+      pixelRenderer ix iy = coordRenderer (x0 + fromIntegral ix * pixelSize, y1 - fromIntegral iy * pixelSize)
 
 
 -- | Generate an image in the Int X Int space
@@ -111,4 +111,4 @@ frac2rgb8 f = PixelRGB8 ff ff ff
 
 -- function to convert a Fraction between 0 and 1 to an Integer betwenn 0 and255
 frac2pixel8 :: Frac -> Pixel8
-frac2pixel8 f = floor $ (fromIntegral 255) * (inInterval f 0 1)
+frac2pixel8 f = floor $ 255 * inInterval f 0 1
