@@ -4,30 +4,36 @@
 --
 -- Here we have the base functionality for the functional images.
 -- This is a bridge between the geometric spaces of Conal Eliott
--- and the image gnereating functions of JuicyPixels.
+-- and the image genereating functions of JuicyPixels.
+--
+-- Translations of Conal types to my types
+--        Image           FImage
 --
 -- ---------------------------------------------------------------------------
 
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module FunctionalImagesBase
-    ( FImage
+    ( writePng
+    , FImage
+    , Picture
     , Point
     , Frac
     , generateImageR2
-    , PxColor
-    , pxWhite
-    , pxBlack
-    , pxRed
-    , pxGreen
-    , pxBlue
+    , Color
+    , white
+    , black
+    , red
+    , green
+    , blue
     , lerpC
     , lighten
     , darken
     , bilerpC
     ) where
 
-import Codec.Picture
+import Codec.Picture hiding (Image, Color)
+import qualified Codec.Picture as JP (Image)
 
 -- | Type Point with Real Coordinates
 type Point = (Float, Float)
@@ -35,8 +41,11 @@ type Point = (Float, Float)
 -- type fraction means numbers between 0 and 1
 type Frac = Float
 
--- | a type for the Functional Images (note FImage to avoid name clashes)
+-- | a type for the functional images (note FImage to avoid name clashes)
 type FImage a = Point -> a
+
+-- | we need a type for a displayable image, this is a picture
+type Picture = JP.Image PixelRGB8
 
 -- a little helper function to restict a value into an interal
 inInterval :: Ord a => a -> a -> a -> a
@@ -63,12 +72,12 @@ instance ToPixelRGB8 Frac where
 frac2pixel8 :: (Integral b, RealFrac r) => r -> b
 frac2pixel8 f = floor $ 255 * inInterval f 0 1
 
--- | Generate an image in the Real X Real space
+-- | Generate an picture in the Real X Real space
 generateImageR2 :: ToPixelRGB8 a => (Point -> a)  -- Coordinate Rendering function
          -> Point                           -- lower left corner
          -> Point                            -- upper right corner
          -> Int                              -- width in pixel
-         -> Image PixelRGB8                          -- Resulting picture
+         -> Picture                          -- Resulting picture
 generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRenderer width height
     where
       pixelSize = (x1 - x0) / fromIntegral width
@@ -78,8 +87,7 @@ generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRendere
 -- ----------------------------------------------------------------------------
 -- Color support
 -- ----------------------------------------------------------------------------
-
-type PxColor = PixelRGBF
+type Color = PixelRGBF
 
 instance ToPixelRGB8 PixelRGBF
    where
@@ -87,35 +95,43 @@ instance ToPixelRGB8 PixelRGBF
         PixelRGB8 (f r) (f g) (f b)
            where f = frac2pixel8
 
-pxRed :: PixelRGBF
-pxRed = PixelRGBF 1 0 0
+red :: Color
+red = PixelRGBF 1 0 0
 
-pxWhite :: PixelRGBF
-pxWhite = PixelRGBF 1 1 1
+white :: Color
+white = PixelRGBF 1 1 1
 
-pxBlack :: PixelRGBF
-pxBlack = PixelRGBF 0 0 0
+black :: Color
+black = PixelRGBF 0 0 0
 
-pxBlue :: PixelRGBF
-pxBlue = PixelRGBF 0 0 1
+blue :: Color
+blue = PixelRGBF 0 0 1
 
-pxGreen :: PixelRGBF
-pxGreen = PixelRGBF 0 1 0
+green :: Color
+green = PixelRGBF 0 1 0
+
+-- ----------------------------------------------------------------------------
+-- Operations with color functions
+-- ----------------------------------------------------------------------------
 
 -- | linear interpolate betrween 2 colors
 --   The weight w must be between 0 and 1
-lerpC :: Float -> PxColor -> PxColor -> PxColor
+lerpC :: Float -> Color -> Color -> Color
 lerpC w (PixelRGBF r1 g1 b1) (PixelRGBF r2 g2 b2) =
   PixelRGBF (h r1 r2) (h g1 g2) (h b1 b2)
     where
       h x1 x2 = w * x1 + (1 - w) * x2
 
 -- | Two useful functions
-lighten, darken :: Frac -> PxColor -> PxColor
-lighten w = lerpC w pxWhite
-darken  w = lerpC w pxBlack
+lighten, darken :: Frac -> Color -> Color
+lighten w = lerpC w white
+darken  w = lerpC w black
 
 -- | Two dimensional interpolation
-bilerpC :: PxColor -> PxColor -> PxColor -> PxColor -> (Frac, Frac) -> PxColor
+bilerpC :: Color -> Color -> Color -> Color -> (Frac, Frac) -> Color
 bilerpC ll lr ul ur (wx, wy) =
   lerpC wy (lerpC wx ll lr) (lerpC wx ul ur)
+
+-- | cOver color overlay
+-- cOver :: Color -> Color -> Color
+-- cOver (r1, g1, b1) ()
