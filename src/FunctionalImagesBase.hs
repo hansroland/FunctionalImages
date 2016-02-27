@@ -18,6 +18,10 @@ module FunctionalImagesBase
     , FImage
     , Picture
     , Point
+    , PolarPoint
+    , toPolar
+    , fromPolar
+    , dist0
     , Frac
     , generateImageR2
     , Color
@@ -86,6 +90,24 @@ generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRendere
       pixelRenderer ix iy = toPixelRGB8 $ coordRenderer (x0 + fromIntegral ix * pixelSize, y1 - fromIntegral iy * pixelSize)
 
 -- ----------------------------------------------------------------------------
+-- Polar Coordinates
+-- ----------------------------------------------------------------------------
+-- | Polar Coordinates
+type PolarPoint = (Float, Float)
+
+-- | Convert from Polar to Cartesian coordinates
+fromPolar :: PolarPoint -> Point
+fromPolar (ρ, θ) = (ρ * cos θ, ρ * sin θ)
+
+-- | Convert from Cartesian to Polar coordinates
+toPolar:: Point -> PolarPoint
+toPolar (x, y) = (dist0 (x, y), atan2 y x)
+
+-- | distance to the origin of the coordiante system
+dist0 :: FImage Float
+dist0 (x, y) = sqrt $ x**2 + y**2
+
+-- ----------------------------------------------------------------------------
 -- Color support
 -- ----------------------------------------------------------------------------
 
@@ -102,6 +124,7 @@ data PixelRGBFA = PixelRGBFA {-# UNPACK #-} !PixelF -- Red
                              {-# UNPACK #-} !PixelF -- Alpha
                deriving (Eq, Ord, Show)
 
+-- | Type for our Color
 type Color = PixelRGBFA
 
 instance ToPixelRGB8 PixelRGBFA
