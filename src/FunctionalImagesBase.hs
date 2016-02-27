@@ -25,6 +25,8 @@ module FunctionalImagesBase
     , Frac
     , generateImageR2
     , Color
+    , PixelRGBFA
+    , invisible
     , white
     , black
     , red
@@ -34,6 +36,18 @@ module FunctionalImagesBase
     , lighten
     , darken
     , bilerpC
+    , cOver
+    , lift0
+    , lift1
+    , lift2
+    , lift3
+    , over
+    , cond
+    , lerpI
+    , emptyI
+    , whiteI
+    , blackI
+    , redI
     ) where
 
 import Codec.Picture hiding (Image, Color)
@@ -133,6 +147,9 @@ instance ToPixelRGB8 PixelRGBFA
         PixelRGB8 (f r) (f g) (f b)
            where f = frac2pixel8
 
+invisible :: Color
+invisible = PixelRGBFA 0 0 0 0
+
 red :: Color
 red = PixelRGBFA 1 0 0 1
 
@@ -169,3 +186,47 @@ darken  w = lerpC w black
 bilerpC :: Color -> Color -> Color -> Color -> (Frac, Frac) -> Color
 bilerpC ll lr ul ur (wx, wy) =
   lerpC wy (lerpC wx ll lr) (lerpC wx ul ur)
+
+-- | Color overlay. blend the 2 colors according to the opacity of the first.
+cOver :: Color -> Color -> Color
+cOver (PixelRGBFA r1  g1  b1  a1) (PixelRGBFA r2 g2 b2 a2)
+   = PixelRGBFA (h r1 r2) (h g1 g2) (h b1 b2) (h a1 a2)
+     where
+       h x1 x2 = x1 + (1 - a1) * x2
+
+-- | A type for color images
+type ImageC = FImage Color
+
+-- ---------------------------------------------------------------------------
+-- Pointwise lifting
+-- ---------------------------------------------------------------------------
+lift0 :: a -> p -> a
+lift0 = const
+
+lift1 :: (a -> b) -> (p -> a) -> p -> b
+lift1 h f1 = h . f1
+
+lift2 :: (a -> b -> c) -> (p -> a) -> (p -> b) -> p -> c
+lift2 h f1 f2  p = h (f1 p) (f2 p)
+
+lift3 :: (a -> b -> c -> d) -> (p -> a) -> (p -> b) -> (p -> c) -> p -> d
+lift3 h f1 f2 f3 p =  h (f1 p) (f2 p) (f3 p)
+
+-- | Overlay one image on another
+over :: ImageC -> ImageC -> ImageC
+over = lift2 cOver
+
+-- | Pointwise selection of one image
+cond :: FImage Bool -> FImage c -> FImage c -> FImage c
+cond = lift3 (\a b c -> if a then b else c)
+
+-- | Interpolation between 2 images
+lerpI ::  FImage Frac -> ImageC -> ImageC -> ImageC
+lerpI = lift3 lerpC
+
+-- Names for some opaque constant-colored images
+
+emptyI = const invisible
+whiteI = const white
+blackI = const black
+redI = const red
