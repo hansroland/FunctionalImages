@@ -55,6 +55,7 @@ inInterval val low high
    | otherwise  = val
 
 -- | a class to convert to JuicyPixel colors
+--  At the moment we ignore the alpha channel
 class ToPixelRGB8 a where
   toPixelRGB8 :: a -> PixelRGB8
 
@@ -87,28 +88,42 @@ generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRendere
 -- ----------------------------------------------------------------------------
 -- Color support
 -- ----------------------------------------------------------------------------
-type Color = PixelRGBF
 
-instance ToPixelRGB8 PixelRGBF
+-- | HDR pixel type storing floating point 32bit red, green and blue (RGB) information.
+-- Same value range and comments apply as for 'PixelF'.
+-- Values are stored in the following order:
+--  * Red
+--  * Green
+--  * Blue
+--  * Alpha Channel
+data PixelRGBFA = PixelRGBFA {-# UNPACK #-} !PixelF -- Red
+                             {-# UNPACK #-} !PixelF -- Green
+                             {-# UNPACK #-} !PixelF -- Blue
+                             {-# UNPACK #-} !PixelF -- Alpha
+               deriving (Eq, Ord, Show)
+
+type Color = PixelRGBFA
+
+instance ToPixelRGB8 PixelRGBFA
    where
-     toPixelRGB8 (PixelRGBF r g b ) =
+     toPixelRGB8 (PixelRGBFA r g b a) =
         PixelRGB8 (f r) (f g) (f b)
            where f = frac2pixel8
 
 red :: Color
-red = PixelRGBF 1 0 0
+red = PixelRGBFA 1 0 0 1
 
 white :: Color
-white = PixelRGBF 1 1 1
+white = PixelRGBFA 1 1 1 1
 
 black :: Color
-black = PixelRGBF 0 0 0
+black = PixelRGBFA 0 0 0 1
 
 blue :: Color
-blue = PixelRGBF 0 0 1
+blue = PixelRGBFA 0 0 1 1
 
 green :: Color
-green = PixelRGBF 0 1 0
+green = PixelRGBFA 0 1 0 1
 
 -- ----------------------------------------------------------------------------
 -- Operations with color functions
@@ -117,8 +132,8 @@ green = PixelRGBF 0 1 0
 -- | linear interpolate betrween 2 colors
 --   The weight w must be between 0 and 1
 lerpC :: Float -> Color -> Color -> Color
-lerpC w (PixelRGBF r1 g1 b1) (PixelRGBF r2 g2 b2) =
-  PixelRGBF (h r1 r2) (h g1 g2) (h b1 b2)
+lerpC w (PixelRGBFA r1 g1 b1 a1) (PixelRGBFA r2 g2 b2 a2) =
+  PixelRGBFA (h r1 r2) (h g1 g2) (h b1 b2) (h a1 a2)
     where
       h x1 x2 = w * x1 + (1 - w) * x2
 
@@ -131,7 +146,3 @@ darken  w = lerpC w black
 bilerpC :: Color -> Color -> Color -> Color -> (Frac, Frac) -> Color
 bilerpC ll lr ul ur (wx, wy) =
   lerpC wy (lerpC wx ll lr) (lerpC wx ul ur)
-
--- | cOver color overlay
--- cOver :: Color -> Color -> Color
--- cOver (r1, g1, b1) ()
