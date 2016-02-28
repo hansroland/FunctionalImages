@@ -42,10 +42,6 @@ module FunctionalImagesBase
     , darken
     , bilerpC
     , cOver
-    , lift0
-    , lift1
-    , lift2
-    , lift3
     , over
     , cond
     , lerpI
@@ -60,6 +56,7 @@ module FunctionalImagesBase
 
 import Codec.Picture hiding (Image, Color)
 import qualified Codec.Picture as JP (Image)
+import Control.Applicative
 
 -- | Type Point with Real Coordinates
 type Point = (Float, Float)
@@ -221,32 +218,19 @@ cOver (PixelRGBFA r1  g1  b1  a1) (PixelRGBFA r2 g2 b2 a2)
 -- | A type for color images
 type ImageC = FImage Color
 
--- ---------------------------------------------------------------------------
--- Pointwise lifting
--- ---------------------------------------------------------------------------
-lift0 :: a -> p -> a
-lift0 = const
-
-lift1 :: (a -> b) -> (p -> a) -> p -> b
-lift1 h f1 = h . f1
-
-lift2 :: (a -> b -> c) -> (p -> a) -> (p -> b) -> p -> c
-lift2 h f1 f2  p = h (f1 p) (f2 p)
-
-lift3 :: (a -> b -> c -> d) -> (p -> a) -> (p -> b) -> (p -> c) -> p -> d
-lift3 h f1 f2 f3 p =  h (f1 p) (f2 p) (f3 p)
+-- Conals lifting functions are the applicative lift functions
 
 -- | Overlay one image on another
 over :: ImageC -> ImageC -> ImageC
-over = lift2 cOver
+over = liftA2 cOver
 
 -- | Pointwise selection of one image
 cond :: FImage Bool -> FImage c -> FImage c -> FImage c
-cond = lift3 (\a b c -> if a then b else c)
+cond = liftA3 (\a b c -> if a then b else c)
 
 -- | Interpolation between 2 images
 lerpI ::  FImage Frac -> ImageC -> ImageC -> ImageC
-lerpI = lift3 lerpC
+lerpI = liftA3 lerpC
 
 -- Names for some opaque constant-colored images
 
@@ -256,4 +240,4 @@ blackI = const black
 redI = const red
 yellowI = const yellow
 greenI = const green
-blueI = const blue 
+blueI = const blue
