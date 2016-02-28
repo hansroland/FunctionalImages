@@ -16,22 +16,27 @@
 module FunctionalImagesBase
     ( writePng
     , FImage
+    , Region
     , Picture
     , Point
+    , checker
     , PolarPoint
     , toPolar
     , fromPolar
     , dist0
+    , polarChecker
     , Frac
     , generateImageR2
     , Color
     , PixelRGBFA
+    , ImageC
     , invisible
     , white
     , black
     , red
     , green
     , blue
+    , yellow
     , lerpC
     , lighten
     , darken
@@ -48,6 +53,9 @@ module FunctionalImagesBase
     , whiteI
     , blackI
     , redI
+    , greenI
+    , blueI
+    , yellowI
     ) where
 
 import Codec.Picture hiding (Image, Color)
@@ -61,6 +69,9 @@ type Frac = Float
 
 -- | a type for the functional images (note FImage to avoid name clashes)
 type FImage a = Point -> a
+
+-- | Boolean valued images can be used for image masking
+type Region = FImage Bool
 
 -- | we need a type for a displayable image, this is a picture
 type Picture = JP.Image PixelRGB8
@@ -103,6 +114,10 @@ generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRendere
       height = floor $ (y1 - y0) / (x1 - x0) * fromIntegral width
       pixelRenderer ix iy = toPixelRGB8 $ coordRenderer (x0 + fromIntegral ix * pixelSize, y1 - fromIntegral iy * pixelSize)
 
+-- The function to create a chess board
+checker :: FImage Bool
+checker (x, y) = even $ floor x + floor y
+
 -- ----------------------------------------------------------------------------
 -- Polar Coordinates
 -- ----------------------------------------------------------------------------
@@ -120,6 +135,12 @@ toPolar (x, y) = (dist0 (x, y), atan2 y x)
 -- | distance to the origin of the coordiante system
 dist0 :: FImage Float
 dist0 (x, y) = sqrt $ x**2 + y**2
+
+-- | Polar Checkboard
+polarChecker :: Int -> FImage Bool
+polarChecker n = checker . sc . toPolar
+   where
+     sc (r,a) = (r,a * fromIntegral n / pi)
 
 -- ----------------------------------------------------------------------------
 -- Color support
@@ -164,6 +185,9 @@ blue = PixelRGBFA 0 0 1 1
 
 green :: Color
 green = PixelRGBFA 0 1 0 1
+
+yellow :: Color
+yellow = PixelRGBFA 1 1 0 1
 
 -- ----------------------------------------------------------------------------
 -- Operations with color functions
@@ -230,3 +254,6 @@ emptyI = const invisible
 whiteI = const white
 blackI = const black
 redI = const red
+yellowI = const yellow
+greenI = const green
+blueI = const blue 
