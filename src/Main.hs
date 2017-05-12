@@ -26,7 +26,7 @@ bodyElement = do
   ctrlImageEx "Polar Checkboard" (polarChecker 10) 10 300
   ctrlImageEx "Wave Distance" wavDist 10 300
   ctrlImageEx "Sierpinski Triangle" sierpinski 256 256
-  let redSquare :: FImage Color
+  let redSquare :: Image Color
       redSquare _ = darken 0.2 red
   ctrlImage "Red" redSquare 5
   ctrlImageEx "Colored Polar Chessboard" coloredPolarChess 10 300
@@ -34,11 +34,11 @@ bodyElement = do
   ctrlImage "Yellow Blue Rings" ybRings 10
   return ()
 
-ctrlImage :: (ToPixelRGBA8 a, MonadWidget t m) => T.Text -> FImage a -> Int ->  m ()
+ctrlImage :: (ToPixelRGBA8 a, MonadWidget t m) => T.Text -> Image a -> Int ->  m ()
 ctrlImage imgName imgFunction width = ctrlImageEx imgName imgFunction width 256
 
 -- | 
-ctrlImageEx :: (ToPixelRGBA8 a, MonadWidget t m) => T.Text -> FImage a -> Int -> Int -> m ()
+ctrlImageEx :: (ToPixelRGBA8 a, MonadWidget t m) => T.Text -> Image a -> Int -> Int -> m ()
 ctrlImageEx imgName imgFunction width size = do
   el "h4" $ text imgName
   text "Width: "
@@ -56,6 +56,6 @@ ctrlImageEx imgName imgFunction width size = do
  
 -- Pure user user functions ------------------------------------------------------------------------------
 
-pixelFunction :: ToPixelRGBA8 a => FImage a -> T.Text -> PixelFunction
+pixelFunction :: ToPixelRGBA8 a => Image a -> T.Text -> PixelFunction
 pixelFunction f strW = convertFunction w  w f
    where w = read $ T.unpack strW
