@@ -14,21 +14,18 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module FunctionalImagesBase
-    ( writePng
-    , FImage
+    ( FImage
     , Region
-    , Picture
     , Point
-    , checker
     , PolarPoint
     , toPolar
     , fromPolar
     , dist0
-    , polarChecker
     , Frac
-    , generateImageR2
     , Color
-    , PixelRGBFA
+    , PixelRGBAF
+    , ToPixelRGBA8
+    , convertFunction
     , ImageC
     , invisible
     , white
@@ -54,24 +51,21 @@ module FunctionalImagesBase
     , yellowI
     ) where
 
-import Codec.Picture hiding (Image, Color)
-import qualified Codec.Picture as JP (Image)
+import Reflex.Dom.Brownies
 import Control.Applicative
+import Data.NumInstances.Tuple
 
 -- | Type Point with Real Coordinates
-type Point = (Float, Float)
+type Point = (Double, Double)
 
 -- type fraction means numbers between 0 and 1
-type Frac = Float
+type Frac = Double
 
 -- | a type for the functional images (note FImage to avoid name clashes)
 type FImage a = Point -> a
 
 -- | Boolean valued images can be used for image masking
 type Region = FImage Bool
-
--- | we need a type for a displayable image, this is a picture
-type Picture = JP.Image PixelRGB8
 
 -- a little helper function to restict a value into an interal
 inInterval :: Ord a => a -> a -> a -> a
@@ -82,15 +76,15 @@ inInterval val low high
 
 -- | a class to convert to JuicyPixel colors
 --  At the moment we ignore the alpha channel
-class ToPixelRGB8 a where
-  toPixelRGB8 :: a -> PixelRGB8
+class ToPixelRGBA8 a where
+  toPixelRGBA8 :: a -> PixelRGBA8
 
-instance ToPixelRGB8 Bool where
-  toPixelRGB8 False  = PixelRGB8 255 255 255
-  toPixelRGB8 True = PixelRGB8   0   0   0
+instance ToPixelRGBA8 Bool where
+  toPixelRGBA8 False  = PixelRGBA8 255 255 255 255
+  toPixelRGBA8 True = PixelRGBA8   0   0   0   255
 
-instance ToPixelRGB8 Frac where
-  toPixelRGB8 f = PixelRGB8 ff ff ff
+instance ToPixelRGBA8 Frac where
+  toPixelRGBA8 f = PixelRGBA8 ff ff ff 255
       where
         ff = frac2pixel8 f
 
@@ -99,27 +93,25 @@ instance ToPixelRGB8 Frac where
 frac2pixel8 :: (Integral b, RealFrac r) => r -> b
 frac2pixel8 f = floor $ 255 * inInterval f 0 1
 
--- | Generate an picture in the Real X Real space
-generateImageR2 :: ToPixelRGB8 a => (Point -> a)  -- Coordinate Rendering function
-         -> Point                           -- lower left corner
-         -> Point                            -- upper right corner
-         -> Int                              -- width in pixel
-         -> Picture                          -- Resulting picture
-generateImageR2 coordRenderer (x0,y0) (x1,y1) width = generateImage pixelRenderer width height
-    where
-      pixelSize = (x1 - x0) / fromIntegral width
-      height = floor $ (y1 - y0) / (x1 - x0) * fromIntegral width
-      pixelRenderer ix iy = toPixelRGB8 $ coordRenderer (x0 + fromIntegral ix * pixelSize, y1 - fromIntegral iy * pixelSize)
-
--- The function to create a chess board
-checker :: FImage Bool
-checker (x, y) = even $ floor x + floor y
+-- | convert a Real image function to a canvas function to be used in Reflex.Dom.Brownies
+convertFunction :: ToPixelRGBA8 a => Double -> Double -> FImage a -> PixelFunction
+convertFunction rSizeX rSizeY rImage iSizeX iSizeY iValX iValY = toPixelRGBA8 $ rImage $ coordTrans rSize iSize iVal
+  where
+    iVal = (iValX, iValY)
+    rSize = (rSizeX, rSizeY)
+    iSize = (iSizeX, iSizeY)
+    -- Transform canvas pixel coordinates to Real coordinates used by the real valued image functions
+    coordTrans :: Point -> ICoord -> ICoord -> Point
+    coordTrans rSize iSize iPoint = (rSize / fromIntPair iSize) * fromIntPair iPoint - rSize / 2 
+    fromIntPair :: (Int, Int) -> (Double, Double)
+    fromIntPair (n, m) = (fromIntegral n, fromIntegral m)
+   -- coordTrans (7,7) (255,255) (0,255) -> (-3.5,3.5)
 
 -- ----------------------------------------------------------------------------
 -- Polar Coordinates
 -- ----------------------------------------------------------------------------
 -- | Polar Coordinates
-type PolarPoint = (Float, Float)
+type PolarPoint = (Double, Double)
 
 -- | Convert from Polar to Cartesian coordinates
 fromPolar :: PolarPoint -> Point
@@ -130,18 +122,14 @@ toPolar:: Point -> PolarPoint
 toPolar (x, y) = (dist0 (x, y), atan2 y x)
 
 -- | distance to the origin of the coordiante system
-dist0 :: FImage Float
+dist0 :: FImage Double
 dist0 (x, y) = sqrt $ x**2 + y**2
-
--- | Polar Checkboard
-polarChecker :: Int -> FImage Bool
-polarChecker n = checker . sc . toPolar
-   where
-     sc (r,a) = (r,a * fromIntegral n / pi)
 
 -- ----------------------------------------------------------------------------
 -- Color support
 -- ----------------------------------------------------------------------------
+
+type PixelF = Double
 
 -- | HDR pixel type storing floating point 32bit red, green and blue (RGB) information.
 -- Same value range and comments apply as for 'PixelF'.
@@ -150,41 +138,41 @@ polarChecker n = checker . sc . toPolar
 --  * Green
 --  * Blue
 --  * Alpha Channel
-data PixelRGBFA = PixelRGBFA {-# UNPACK #-} !PixelF -- Red
+data PixelRGBAF = PixelRGBAF {-# UNPACK #-} !PixelF -- Red
                              {-# UNPACK #-} !PixelF -- Green
                              {-# UNPACK #-} !PixelF -- Blue
                              {-# UNPACK #-} !PixelF -- Alpha
                deriving (Eq, Ord, Show)
 
 -- | Type for our Color
-type Color = PixelRGBFA
+type Color = PixelRGBAF
 
-instance ToPixelRGB8 PixelRGBFA
+instance ToPixelRGBA8 PixelRGBAF
    where
-     toPixelRGB8 (PixelRGBFA r g b a) =
-        PixelRGB8 (f r) (f g) (f b)
+     toPixelRGBA8 (PixelRGBAF r g b a) =
+        PixelRGBA8 (f r) (f g) (f b) (f a)
            where f = frac2pixel8
 
 invisible :: Color
-invisible = PixelRGBFA 0 0 0 0
+invisible = PixelRGBAF 0 0 0 0
 
 red :: Color
-red = PixelRGBFA 1 0 0 1
+red = PixelRGBAF 1 0 0 1
 
 white :: Color
-white = PixelRGBFA 1 1 1 1
+white = PixelRGBAF 1 1 1 1
 
 black :: Color
-black = PixelRGBFA 0 0 0 1
+black = PixelRGBAF 0 0 0 1
 
 blue :: Color
-blue = PixelRGBFA 0 0 1 1
+blue = PixelRGBAF 0 0 1 1
 
 green :: Color
-green = PixelRGBFA 0 1 0 1
+green = PixelRGBAF 0 1 0 1
 
 yellow :: Color
-yellow = PixelRGBFA 1 1 0 1
+yellow = PixelRGBAF 1 1 0 1
 
 -- ----------------------------------------------------------------------------
 -- Operations with color functions
@@ -192,9 +180,9 @@ yellow = PixelRGBFA 1 1 0 1
 
 -- | linear interpolate betrween 2 colors
 --   The weight w must be between 0 and 1
-lerpC :: Float -> Color -> Color -> Color
-lerpC w (PixelRGBFA r1 g1 b1 a1) (PixelRGBFA r2 g2 b2 a2) =
-  PixelRGBFA (h r1 r2) (h g1 g2) (h b1 b2) (h a1 a2)
+lerpC :: Double -> Color -> Color -> Color
+lerpC w (PixelRGBAF r1 g1 b1 a1) (PixelRGBAF r2 g2 b2 a2) =
+  PixelRGBAF (h r1 r2) (h g1 g2) (h b1 b2) (h a1 a2)
     where
       h x1 x2 = w * x1 + (1 - w) * x2
 
@@ -210,8 +198,8 @@ bilerpC ll lr ul ur (wx, wy) =
 
 -- | Color overlay. blend the 2 colors according to the opacity of the first.
 cOver :: Color -> Color -> Color
-cOver (PixelRGBFA r1  g1  b1  a1) (PixelRGBFA r2 g2 b2 a2)
-   = PixelRGBFA (h r1 r2) (h g1 g2) (h b1 b2) (h a1 a2)
+cOver (PixelRGBAF r1  g1  b1  a1) (PixelRGBAF r2 g2 b2 a2)
+   = PixelRGBAF (h r1 r2) (h g1 g2) (h b1 b2) (h a1 a2)
      where
        h x1 x2 = x1 + (1 - a1) * x2
 
