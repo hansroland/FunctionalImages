@@ -43,10 +43,13 @@ bilerpBRBW :: FImage Color
 bilerpBRBW = bilerpC black red blue white
 
 
-
 blackWhiteIm, blueYellowIm :: Region -> ImageC
 blackWhiteIm reg = cond reg blackI whiteI
 blueYellowIm reg = cond reg blueI yellowI
 
 coloredPolarChess :: ImageC
 coloredPolarChess = lerpI wavDist(blackWhiteIm (polarChecker 10)) (blueYellowIm checker )
+
+-- | Rings that alternate between yellow and blue 
+ybRings :: ImageC
+ybRings = lerpI wavDist blueI yellowI

@@ -55,10 +55,14 @@ import Reflex.Dom.Brownies
 import Control.Applicative
 import Data.NumInstances.Tuple
 
+-- -----------------------------------------------------------------------------------
+-- Section 2. What is an image?
+-- -----------------------------------------------------------------------------------
+
 -- | Type Point with Real Coordinates
 type Point = (Double, Double)
 
--- type fraction means numbers between 0 and 1
+--  | Type fraction means numbers between 0 and 1
 type Frac = Double
 
 -- | a type for the functional images (note FImage to avoid name clashes)
@@ -126,7 +130,7 @@ dist0 :: FImage Double
 dist0 (x, y) = sqrt $ x**2 + y**2
 
 -- ----------------------------------------------------------------------------
--- Color support
+-- Section 3: Colors
 -- ----------------------------------------------------------------------------
 
 type PixelF = Double
@@ -206,6 +210,10 @@ cOver (PixelRGBAF r1  g1  b1  a1) (PixelRGBAF r2 g2 b2 a2)
 -- | A type for color images
 type ImageC = FImage Color
 
+-- ---------------------------------------------------------------------------------------
+-- Section 4: Pointwise lifting
+-- ---------------------------------------------------------------------------------------
+--
 -- Conals lifting functions are the applicative lift functions
 
 -- | Overlay one image on another
@@ -229,3 +237,4 @@ redI = const red
 yellowI = const yellow
 greenI = const green
 blueI = const blue
+

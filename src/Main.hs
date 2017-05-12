@@ -26,7 +26,12 @@ bodyElement = do
   ctrlImageEx "Polar Checkboard" (polarChecker 10) 10 300
   ctrlImageEx "Wave Distance" wavDist 10 300
   ctrlImageEx "Sierpinski Triangle" sierpinski 256 256
-  -- ctrlImage "Red" (darken 0.2 red) 5
+  let redSquare :: FImage Color
+      redSquare _ = darken 0.2 red
+  ctrlImage "Red" redSquare 5
+  ctrlImageEx "Colored Polar Chessboard" coloredPolarChess 10 300
+  ctrlImage "Color Interpolation" bilerpBRBW 2
+  ctrlImage "Yellow Blue Rings" ybRings 10
   return ()
 
 ctrlImage :: (ToPixelRGBA8 a, MonadWidget t m) => T.Text -> FImage a -> Int ->  m ()
