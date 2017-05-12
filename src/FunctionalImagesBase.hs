@@ -6,15 +6,13 @@
 -- This is a bridge between the geometric spaces of Conal Eliott
 -- and the image genereating functions of JuicyPixels.
 --
--- Translations of Conal types to my types
---        Image           FImage
 --
 -- ---------------------------------------------------------------------------
 
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module FunctionalImagesBase
-    ( FImage
+    ( Image
     , Region
     , Point
     , PolarPoint
@@ -65,11 +63,11 @@ type Point = (Double, Double)
 --  | Type fraction means numbers between 0 and 1
 type Frac = Double
 
--- | a type for the functional images (note FImage to avoid name clashes)
-type FImage a = Point -> a
+-- | a type for the functional images
+type Image a = Point -> a
 
 -- | Boolean valued images can be used for image masking
-type Region = FImage Bool
+type Region = Image Bool
 
 -- a little helper function to restict a value into an interal
 inInterval :: Ord a => a -> a -> a -> a
@@ -98,7 +96,7 @@ frac2pixel8 :: (Integral b, RealFrac r) => r -> b
 frac2pixel8 f = floor $ 255 * inInterval f 0 1
 
 -- | convert a Real image function to a canvas function to be used in Reflex.Dom.Brownies
-convertFunction :: ToPixelRGBA8 a => Double -> Double -> FImage a -> PixelFunction
+convertFunction :: ToPixelRGBA8 a => Double -> Double -> Image a -> PixelFunction
 convertFunction rSizeX rSizeY rImage iSizeX iSizeY iValX iValY = toPixelRGBA8 $ rImage $ coordTrans rSize iSize iVal
   where
     iVal = (iValX, iValY)
@@ -126,7 +124,7 @@ toPolar:: Point -> PolarPoint
 toPolar (x, y) = (dist0 (x, y), atan2 y x)
 
 -- | distance to the origin of the coordiante system
-dist0 :: FImage Double
+dist0 :: Image Double
 dist0 (x, y) = sqrt $ x**2 + y**2
 
 -- ----------------------------------------------------------------------------
@@ -208,7 +206,7 @@ cOver (PixelRGBAF r1  g1  b1  a1) (PixelRGBAF r2 g2 b2 a2)
        h x1 x2 = x1 + (1 - a1) * x2
 
 -- | A type for color images
-type ImageC = FImage Color
+type ImageC = Image Color
 
 -- ---------------------------------------------------------------------------------------
 -- Section 4: Pointwise lifting
@@ -221,11 +219,11 @@ over :: ImageC -> ImageC -> ImageC
 over = liftA2 cOver
 
 -- | Pointwise selection of one image
-cond :: FImage Bool -> FImage c -> FImage c -> FImage c
+cond :: Image Bool -> Image c -> Image c -> Image c
 cond = liftA3 (\a b c -> if a then b else c)
 
 -- | Interpolation between 2 images
-lerpI ::  FImage Frac -> ImageC -> ImageC -> ImageC
+lerpI ::  Image Frac -> ImageC -> ImageC -> ImageC
 lerpI = liftA3 lerpC
 
 -- Names for some opaque constant-colored images

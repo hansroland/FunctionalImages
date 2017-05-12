@@ -10,36 +10,36 @@ import FunctionalImagesBase
 import Data.Bits
 
 -- The function to genrate a vertical strip
-vstrip :: FImage Bool
+vstrip :: Image Bool
 vstrip (x, y) = abs x < 0.5
 
 -- The function to create a chess board
-checker :: FImage Bool
+checker :: Image Bool
 checker (x, y) = even $ floor x + floor y
 
 -- | Polar Checkboard
-polarChecker :: Int -> FImage Bool
+polarChecker :: Int -> Image Bool
 polarChecker n = checker . sc . toPolar
    where
      sc (r,a) = (r,a * fromIntegral n / pi)
 
 -- | alternate concentric Rings
-altRings :: FImage Bool
+altRings :: Image Bool
 altRings  = even . floor . dist0
 
 -- | waveDist
-wavDist :: FImage Frac
+wavDist :: Image Frac
 wavDist p = (1 + cos (pi * dist0 p)) / 2
 
 -- | sierpinski - An other way to draw a sierpinski triangle
-sierpinski :: FImage Bool
+sierpinski :: Image Bool
 sierpinski (x , y) = abs ix .|. abs iy == abs ix
   where
     ix  = round x :: Int
     iy = round y :: Int
 
 
-bilerpBRBW :: FImage Color
+bilerpBRBW :: Image Color
 bilerpBRBW = bilerpC black red blue white
 
 
