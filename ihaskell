@@ -1,3 +1,0 @@
-#!/bin/bash 
-cd /home/roland/Software/Github/IHaskell
-cabal exec ipython -- notebook ~/Projekte/FunctionalImages/notebooks
