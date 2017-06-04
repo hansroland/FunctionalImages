@@ -1,0 +1,1 @@
+04.06.2017 - Switch from Browser to WebkitGtk
