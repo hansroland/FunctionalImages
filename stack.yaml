@@ -4,48 +4,39 @@ packages:
 - '.'
 - location:
     git: https://github.com/reflex-frp/reflex
-    commit: 63cb8f83deb68f416ba95afe3d1c5372a40dca43
+    commit: 2fe0f566f8d6b6eceb178a85516643390111bb83
   extra-dep: true
 - location:
     git: https://github.com/reflex-frp/reflex-dom
-    commit: e636a3a7a34529116e91c1b1dda567701f1daa18
+    commit: 706ab47df9729bdc5c4ac3f4d8dfd4661d9f6e1a
   subdirs:
-  - reflex-dom-core
   - reflex-dom
+  - reflex-dom-core
   extra-dep: true
 
 - location:
     git: https://github.com/hansroland/reflex-dom-brownies
-    commit: d5cd8e67fd2153ab53505271d92a6c9b4c589ec8    
+    commit: 29a6ff785ebbdca910ccc2791d45c52ba2ef992b    
   extra-dep: true
 
-setup-info:
-  ghcjs:
-    source:
-      ghcjs-0.2.1.9007019_ghc-8.0.1:
-        url: http://ghcjs.tolysz.org/ghc-8.0-2017-02-05-lts-7.19-9007019.tar.gz
-        sha1: d2cfc25f9cda32a25a87d9af68891b2186ee52f9
+# Use  dependent-sum-0.3.2.2 from github.
+# Version on cabal has wrong base dependency
+- location:
+    git: https://github.com/mokus0/dependent-sum
+    commit: 02173260ce60113ac442da04bf40139119271380 
+  extra-dep: true
+  
 extra-deps:
 - ghcjs-dom-0.8.0.0
 - ghcjs-dom-jsaddle-0.8.0.0
 - jsaddle-0.8.3.2
 - jsaddle-dom-0.8.0.0
-- jsaddle-warp-0.8.3.1
+- jsaddle-webkit2gtk-0.8.3.1
+- webkit2gtk3-javascriptcore-0.14.2.1
+- gi-webkit2-4.0.12
+- gi-javascriptcore-4.0.12
 - prim-uniq-0.1.0.1
 - ref-tf-0.4.0.1
 - zenc-0.1.1
-- ghcjs-dom-jsffi-0.8.0.0
-- bytestring-strict-builder-0.4.5
-- base-prelude-1.2.0.1
-compiler-check: match-exact
-compiler: ghcjs-0.2.1.9007019_ghc-8.0.1
-resolver: lts-7.19
-
-
-
-
-
-
-
-
-
+- dependent-sum-template-0.0.0.5
+resolver: lts-8.12
